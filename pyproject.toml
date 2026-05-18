@@ -1,0 +1,29 @@
+[project]
+name = "customer-service-data-analyst-agent"
+version = "0.1.0"
+description = "AI agent for customer service data analysis."
+requires-python = ">=3.11"
+dependencies = [
+    "python-dotenv",
+    "langgraph",
+    "datasets",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "SIM", # flake8-simplify
+]
