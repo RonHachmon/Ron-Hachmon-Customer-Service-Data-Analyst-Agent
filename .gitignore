@@ -10,6 +10,7 @@ __pycache__/
 .Python
 build/
 develop-eggs/
+scripts/
 dist/
 downloads/
 eggs/
@@ -216,3 +217,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Local agent state (checkpoints + user profiles)
+data/

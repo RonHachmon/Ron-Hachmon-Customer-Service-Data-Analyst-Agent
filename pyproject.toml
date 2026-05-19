@@ -4,15 +4,24 @@ version = "0.1.0"
 description = "AI agent for customer service data analysis."
 requires-python = ">=3.11"
 dependencies = [
-    "python-dotenv",
-    "langgraph",
-    "datasets",
+    "python-dotenv>=1.0",
+    "datasets>=3.0",
+    "pandas>=2.2",
+    "pydantic>=2.7",
+    "langchain-core>=0.3",
+    "langchain-openai>=0.2",
+    "langgraph>=0.2",
+    "langgraph-checkpoint-sqlite>=2.0",
+    "fastmcp>=2.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "ruff",
 ]
+
+[tool.setuptools]
+packages = ["agent"]
 
 [tool.ruff]
 line-length = 100
