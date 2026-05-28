@@ -26,7 +26,10 @@ NEBIUS_BASE_URL = "https://api.tokenfactory.nebius.com/v1/"
 ROUTER_MODEL_ENV = "NEBIUS_ROUTER_MODEL"
 REASONER_MODEL_ENV = "NEBIUS_REASONER_MODEL"
 
-DEFAULT_ROUTER_MODEL = "meta-llama/Meta-Llama-3.1-8B-Instruct"
+# Nebius rotates its catalog; these are current as of this writing. Override
+# via the env vars above if a model is retired. Use scripts/smoke_test_nebius.py
+# (or the OpenAI models.list endpoint) to see what's live.
+DEFAULT_ROUTER_MODEL = "Qwen/Qwen3-30B-A3B-Instruct-2507"
 DEFAULT_REASONER_MODEL = "meta-llama/Llama-3.3-70B-Instruct"
 
 
