@@ -26,7 +26,7 @@ from pydantic import BaseModel, Field
 from agent.models import get_router_model
 from agent.prompts import ROUTER_SYSTEM_PROMPT
 
-Route = Literal["structured", "unstructured", "out_of_scope"]
+Route = Literal["structured", "unstructured", "profile", "out_of_scope"]
 
 
 class RouterDecision(BaseModel):
@@ -36,7 +36,9 @@ class RouterDecision(BaseModel):
         description=(
             "How this query should be handled: 'structured' for concrete "
             "data-driven questions, 'unstructured' for open-ended summarization "
-            "over the dataset, 'out_of_scope' for anything unrelated."
+            "over the dataset, 'profile' for questions about the user themselves "
+            "or what the agent remembers about them, 'out_of_scope' for anything "
+            "else unrelated to the dataset."
         ),
     )
     reason: str = Field(
@@ -44,23 +46,33 @@ class RouterDecision(BaseModel):
     )
 
 
-def classify_query(query: str) -> RouterDecision:
+def classify_query(query: str, context: str = "") -> RouterDecision:
     """Return how the router thinks ``query`` should be handled.
 
+    Args:
+        query: The latest user message to classify.
+        context: Optional transcript of recent turns. Needed to resolve
+            follow-ups like "what's the total of the last two?", which are
+            meaningless in isolation — without context the router would wrongly
+            tag them out_of_scope.
+
     The call is deterministic at the model layer (``temperature=0``) but the
-    underlying API can still flake — callers in production should handle
-    transient errors. For Phase 3 we let exceptions bubble up; the graph
-    in Phase 4 will catch them and route to a safe fallback.
+    underlying API can still flake — callers should handle transient errors.
+    The graph catches exceptions and routes to a safe fallback.
     """
     if not query.strip():
         raise ValueError("classify_query requires a non-empty query string")
 
+    messages: list = [SystemMessage(content=ROUTER_SYSTEM_PROMPT)]
+    if context.strip():
+        messages.append(
+            SystemMessage(
+                content="Recent conversation (for resolving follow-ups):\n" + context
+            )
+        )
+    messages.append(HumanMessage(content=query))
+
     classifier = get_router_model().with_structured_output(RouterDecision)
-    result = classifier.invoke(
-        [
-            SystemMessage(content=ROUTER_SYSTEM_PROMPT),
-            HumanMessage(content=query),
-        ]
-    )
+    result = classifier.invoke(messages)
     assert isinstance(result, RouterDecision)
     return result

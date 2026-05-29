@@ -55,6 +55,43 @@ Expected output:
 All Phase 0 checks passed.
 ```
 
+## MCP server (Phase 8)
+
+[mcp_server.py](mcp_server.py) exposes three of the agent's tools over the
+[Model Context Protocol](https://modelcontextprotocol.io/) via
+[FastMCP](https://github.com/jlowin/fastmcp): `count_rows`, `get_examples`, and
+`search_instructions`. The wrappers delegate to the same `@tool` functions the
+agent uses, so the Pydantic validation/normalization applies over MCP too. It's a
+pure pandas data server — **no Nebius API key required**.
+
+Start it (stdio transport):
+
+```powershell
+python mcp_server.py
+# or, via the FastMCP CLI:
+fastmcp run mcp_server.py
+```
+
+Call it from a client — see [mcp_client_example.py](mcp_client_example.py):
+
+```python
+import asyncio
+from fastmcp import Client
+
+async def main() -> None:
+    async with Client("mcp_server.py") as client:  # spawns the server over stdio
+        tools = await client.list_tools()
+        print("tools:", [t.name for t in tools])
+        result = await client.call_tool("count_rows", {"intent": "get_refund"})
+        print("get_refund rows:", result.data)
+
+asyncio.run(main())
+```
+
+```powershell
+python mcp_client_example.py
+```
+
 ## Models
 
 Two models are used (both [Nebius Token Factory](https://docs.tokenfactory.nebius.com/)):
@@ -82,4 +119,4 @@ The full agent is being built in phases. Sections below will be added as each ph
 - Phase 5 — CLI with reasoning trace
 - Phase 6 — episodic memory (SQLite checkpointer)
 - Phase 7 — per-user profile
-- Phase 8 — FastMCP server
+- Phase 8 — FastMCP server ✅ (see [MCP server](#mcp-server-phase-8) above)

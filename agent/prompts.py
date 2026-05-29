@@ -34,14 +34,25 @@ respond / behave / handle Y" — these are ALWAYS unstructured, even when \
 they name a specific category or intent. Example shape: "What themes show \
 up across PAYMENT messages?"
 
-- "out_of_scope" — anything that is NOT about analyzing this dataset: \
-general knowledge, creative writing, product / tool opinions, translation, \
-or pure chitchat with no data question. Example shape: "Translate this to \
-Spanish."
+- "profile" — anything about the USER THEMSELVES: either a question about what \
+you remember ("what do you know / remember about me?", "what's my name?") OR \
+the user SHARING durable facts about themselves (their name, interests, or \
+preferences, e.g. "My name is Ron and I mostly care about refunds"). These \
+concern the stored user profile, not the dataset.
+
+- "out_of_scope" — anything that is NOT about analyzing this dataset and is \
+NOT about the user's profile: general knowledge, creative writing, product / \
+tool opinions, translation, or pure chitchat with no data question. Example \
+shape: "Translate this to Spanish."
 
 Tiebreakers:
 - If the query references the dataset, a category, an intent, or sample rows \
 in any way, it is NOT out_of_scope.
+- Follow-ups that combine, total, compare, or do arithmetic on results from \
+EARLIER dataset queries in this conversation are "structured" and in-scope \
+(e.g. "what's the total of the last two counts?"). The recent-conversation \
+context gives you those numbers; doing math on dataset-derived results is part \
+of analysis, NOT out_of_scope.
 - Summarization signal words — "summarize", "characterize", "describe", \
 "typically", "in general", "what kinds of", "common patterns", "how do X \
 respond / behave" — push toward "unstructured" even when a specific \
@@ -87,6 +98,12 @@ ROUTE_HINTS = {
         "synthesize a short prose summary grounded ONLY in what you retrieved. "
         "Do not invent patterns you didn't observe in the samples."
     ),
+    "profile": (
+        "\n\nThis is a PROFILE query about the user. Answer using the '## User "
+        "context' block in this system prompt. If that block is absent or empty, "
+        "say you don't know anything about them yet. Do NOT call dataset tools "
+        "unless the user also asks something about the data."
+    ),
 }
 
 # Fixed, LLM-free reply for out-of-scope queries. Hard-coded so the agent
@@ -103,4 +120,25 @@ FALLBACK_MESSAGE = (
     "I wasn't able to reach a confident answer within the allowed number of "
     "reasoning steps. Could you rephrase or narrow your question?"
 )
+
+
+PROFILE_UPDATE_SYSTEM_PROMPT = """\
+You maintain a concise, durable profile of a single user, based on their \
+conversation with a data-analyst agent for the Bitext customer-service dataset.
+
+You are given the CURRENT PROFILE and a RECENT CONVERSATION excerpt. Return the \
+UPDATED PROFILE as markdown.
+
+Capture only durable, useful facts:
+- The user's name, if they state it.
+- Topics, categories, or intents they ask about repeatedly (e.g. refunds, shipping).
+- Stated preferences (e.g. prefers concrete examples over raw counts).
+
+Rules:
+- Distill — do NOT store a transcript, greetings, or one-off question wording.
+- Merge new facts into the existing profile; keep it short (a handful of bullets).
+- If nothing new is worth saving, return the current profile unchanged.
+- Output ONLY the markdown profile — no preamble, no commentary, no code fences.
+- Always start with the heading "# User Profile". If you have learned nothing \
+yet, return just that heading with a single bullet noting nothing is known."""
 
